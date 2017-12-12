@@ -17,7 +17,7 @@ public class HttpLauncher {
 
     public static void sendToPackage(String rootPackageName){
         StringBuilder URL = new StringBuilder("http://localhost:8088");
-        List<String> methodNames = Scanner.scanPackageMethodName(rootPackageName);
+        List<String> methodNames = Scanner.scanPackageMethodWithAnnotation(rootPackageName);
         ListIterator<String> iterator = methodNames.listIterator();
         while (iterator.hasNext()){
             String currentMethodName = "";

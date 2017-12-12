@@ -2,11 +2,14 @@ package com.vzard.apiscanner.core;
 
 
 import com.vzard.apiscanner.util.StringUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.net.JarURLConnection;
 import java.net.URISyntaxException;
@@ -19,6 +22,36 @@ import java.util.stream.Collectors;
 public class Scanner {
 
 
+    static Logger logger = LoggerFactory.getLogger(Scanner.class);
+
+
+    /**
+     * 获得包内所有有注解的方法的方法名
+     *
+     * @param rootPackageName
+     * @return
+     */
+    public static List<String> scanPackageMethodWithAnnotation(String rootPackageName) {
+        List<String> classNames = new ArrayList<>();
+        List<List<Method>> methodes = new ArrayList<>();
+        try {
+            classNames = scanPackageClass(rootPackageName);
+            ListIterator<String> iterator = classNames.listIterator();
+            while (iterator.hasNext()) {
+                List<Method> currentClassMethods = scanClassMethod(iterator.next())
+                        .stream()
+                        .filter(t -> (t.getAnnotation(RequestMapping.class) != null))
+                        .collect(Collectors.toList());
+
+
+                methodes.add(currentClassMethods);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return methodes.stream().flatMap(t -> t.stream()).map(t -> StringUtil.ReformatMethodName(t)).collect(Collectors.toList());
+
+    }
 
 
     /**
@@ -26,7 +59,7 @@ public class Scanner {
      * @param rootPackageName
      * @return
      */
-    public static Map<String,String> scanAnnotationAndGetHttpMethod(String rootPackageName){
+    public static HashMap<String, String> scanAnnotationAndGetHttpMethod(String rootPackageName){
 
         List<String> classNameList = scanPackageClass(rootPackageName);
         ClassLoader loader = Thread.currentThread().getContextClassLoader();
@@ -39,9 +72,11 @@ public class Scanner {
                 Method[] methods = clazz.getDeclaredMethods();
                 for (int i = 0; i < methods.length ; i++) {
                     RequestMapping methodAnnotation = methods[i].getAnnotation(RequestMapping.class);
-
-                    if (methodAnnotation != null){
-                        String value = castRequestMethodToString(methodAnnotation.method());
+                    String value = "";
+                    if (methodAnnotation != null) {
+                        if (methodAnnotation.method().length != 0) {
+                            value = castRequestMethodToString(methodAnnotation.method());
+                        }
                         if (value != "") {
                             methodAnnotationHashMap.put(StringUtil.ReformatMethodName(methods[i]), value);
                         }
@@ -61,11 +96,12 @@ public class Scanner {
 
 
     /**
-     * 扫描获取方法上的所有RequestMapping注解的value
+     * 扫描指定类，获取方法上的所有RequestMapping注解的value
      * @param className
      * @return
      */
-    public static Map<String,String> scanAnnotationOnMethod(String className){
+    public static HashMap<String, String> scanAnnotationOnMethod(String className){
+
 
         //List<String> classNameList = scanPackageClass(rootPackageName);
         ClassLoader loader = Thread.currentThread().getContextClassLoader();
@@ -79,9 +115,15 @@ public class Scanner {
             for (int i = 0; i < methods.length ; i++) {
                 RequestMapping methodAnnotation = methods[i].getAnnotation(RequestMapping.class);
 
-                if (methodAnnotation != null){
-                    String value = castStringArrayToString(methodAnnotation.value());
-                    if (value != "") {
+                String value = "";
+                if (null != methodAnnotation) {
+                    //logger.info(methodAnnotation.toString());
+                    if (methodAnnotation.value().length != 0) {
+                        value = castStringArrayToString(methodAnnotation.value());
+                    } else if (methodAnnotation.path().length != 0) {
+                        value = castStringArrayToString(methodAnnotation.path());
+                    }
+                    if (value != "" && null != value) {
                         methodAnnotationHashMap.put(StringUtil.ReformatMethodName(methods[i]), value);
                     }
                 }
@@ -100,7 +142,7 @@ public class Scanner {
      * @param rootPackageName
      * @return
      */
-    public static Map<String,String> scanPackageAnnotationOnClass(String rootPackageName){
+    public static HashMap<String, String> scanPackageAnnotationOnClass(String rootPackageName){
 
         List<String> classNameList = scanPackageClass(rootPackageName);
         ClassLoader loader = Thread.currentThread().getContextClassLoader();
@@ -112,10 +154,14 @@ public class Scanner {
                 String className = iterator.next().toString();
                 Class<?> clazz = loader.loadClass(className);
                 RequestMapping clazzAnnotation = clazz.getAnnotation(RequestMapping.class);
-
-                if (clazzAnnotation != null){
-                    String annotationValue = castStringArrayToString(clazzAnnotation.path());
-                    if (annotationValue != "") {
+                String annotationValue = "";
+                if (null != clazzAnnotation) {
+                    if (clazzAnnotation.value().length != 0) {
+                        annotationValue = castStringArrayToString(clazzAnnotation.value());
+                    } else if (clazzAnnotation.path().length != 0) {
+                        annotationValue = castStringArrayToString(clazzAnnotation.path());
+                    }
+                    if (annotationValue != "" && null != annotationValue) {
                         classAnnotationHashMap.put(className, annotationValue);
                     }
                 }

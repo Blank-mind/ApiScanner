@@ -19,14 +19,23 @@ version = '0.0.1-SNAPSHOT'
 sourceCompatibility = 1.8
 
 repositories {
+
+	maven { url "http://maven.aliyun.com/nexus/content/repositories/central" }
+	maven { url "https://nexus.bybutter.com/repository/maven-public/"
+		credentials {
+			username System.getenv('NEXUS_USERNAME')
+			password System.getenv('NEXUS_PASSWORD')
+		}
+	}
+
 	mavenCentral()
 }
 
 
 dependencies {
 	compile("com.bybutter:butter-gateway:1.0.0") { exclude module: 'spring-boot-starter-butter' }
-	compile('org.springframework.boot:spring-boot-starter-web')
-	compile group: 'org.apache.httpcomponents', name: 'httpclient', version: '4.5.3'
 
+	compile('org.springframework.boot:spring-boot-starter')
+	testCompile group: 'org.testng', name: 'testng', version: '6.13.1'
 	testCompile('org.springframework.boot:spring-boot-starter-test')
 }

@@ -8,35 +8,38 @@ import java.util.*;
 
 public class ApiMapper {
 
+
     /**
      * 获取method-url Map
      *
      * @param rootPackageName
      * @return
      */
-    public static Map<String, String> getUrlMap(String rootPackageName) {
+    public static HashMap<String, String> getUrlMap(String rootPackageName) {
 
-        Map<String, String> urlMap = new HashMap<>();
+        HashMap<String, String> urlMap = new HashMap<>();
 
-        List<String> classNameList = Scanner.scanPackageClass(rootPackageName);
-        Map<String, String> classUrl = Scanner.scanPackageAnnotationOnClass(rootPackageName);
+        // List<String> classNameList = Scanner.scanPackageClass(rootPackageName);
+        HashMap<String, String> classUrl = Scanner.scanPackageAnnotationOnClass(rootPackageName);
         //Map<String,String> methodUrl = ReflectUtil.scanAnnotationOnMethod(rootPackageName);
         //Map<String,String> httpMethod = ReflectUtil.scanPackageAnnotationAndGetHttpMethod(rootPackageName);
-
-        Iterator iterator = classNameList.listIterator();
+        Iterator iterator = classUrl.entrySet().iterator();
         while (iterator.hasNext()) {
             String urlOnClass = "";
-            String currentClassName = iterator.next().toString();
+            HashMap.Entry currentClassNameEntry = (HashMap.Entry) iterator.next();
+            String currentClassName = currentClassNameEntry.getKey().toString();
             urlOnClass = classUrl.get(currentClassName);//添加当前类的注解到url
             if (urlOnClass != null && urlOnClass.endsWith("/")) {
                 urlOnClass = new StringBuilder(urlOnClass).deleteCharAt(urlOnClass.length() - 1).toString();
             }
-            List<String> methodNameList = Scanner.scanClassMethodName(currentClassName);
-            Map<String, String> methodUrl = Scanner.scanAnnotationOnMethod(currentClassName);
-            Iterator methodNameIterator = methodNameList.listIterator();
+            // List<String> methodNameList = Scanner.scanClassMethodName(currentClassName);
+            HashMap<String, String> methodUrl = Scanner.scanAnnotationOnMethod(currentClassName);
+
+            Iterator methodNameIterator = methodUrl.entrySet().iterator();
             while (methodNameIterator.hasNext()) {
                 String urlOnMrthod = "";
-                String currentMethod = methodNameIterator.next().toString();
+                HashMap.Entry currentMethodEntry = (HashMap.Entry) methodNameIterator.next();
+                String currentMethod = currentMethodEntry.getKey().toString();
                 urlOnMrthod = methodUrl.get(currentMethod);
                 if (urlOnMrthod != null && urlOnMrthod.startsWith("/")) {
                     urlOnMrthod = new StringBuilder(urlOnMrthod).deleteCharAt(0).toString();
@@ -57,7 +60,7 @@ public class ApiMapper {
      * @param rootPackageName
      * @return
      */
-    public static Map<String, String> getHttpMothodMap(String rootPackageName) {
+    public static HashMap<String, String> getHttpMothodMap(String rootPackageName) {
         return Scanner.scanAnnotationAndGetHttpMethod(rootPackageName);
     }
 
